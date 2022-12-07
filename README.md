@@ -12,8 +12,8 @@ When a table is contracted, it can be included in script which can be published 
 The basic idea is to make scripts that does the statistical analysis and then published these using MATLAB publish.
 So, if you have stored you data in a table called "tbl" and you want to get summery statics, make a script like:
 
-* result_table=summeryTable(tbl); *
-* plotTable(result_table) *
+'result_table=summeryTable(tbl); 
+ plotTable(result_table)'
 
 Then publish the script MATLAB publishing function  
 
