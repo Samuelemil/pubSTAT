@@ -26,7 +26,7 @@ Then publish the script MATLAB publishing function
 ```
 publish('yourScript.m')
 ```
-
+The resulting HTML file is HTML\yourScript.html
 
 ### Example 2
 Publish the file 'exampleReport.m', using:
