@@ -17,10 +17,15 @@ result_table=summeryTable(tbl);
 ```
 
 Then publish the script MATLAB publishing function  
-
-Try to start to publish the file exampleReport.m, using:
 ```
-the publish('exampleReport.m','showCode',true)
+publish('yourScript.m')
+```
+
+
+### Example
+Try to start  to publish the file exampleReport.m, using:
+```
+publish('exampleReport.m','showCode',true)
 ```
 The resulting HTML file is HTML\exampleReport.html
 
