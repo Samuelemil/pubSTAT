@@ -10,7 +10,7 @@ When a table is contracted, it can be included in script which can be published 
 
 ## Get started 
 The basic idea is to make scripts that does the statistical analysis and then published these using MATLAB publish.
-So, if you have stored you data in a table called "tbl" and you want to get summery statics, make a script like:
+So, if you have stored you data in a table called "tbl" and you want to get summery statics, make a script called 'yourScript.m':
 ```
 result_table=summeryTable(tbl);
  plotTable(result_table)
@@ -23,14 +23,15 @@ publish('yourScript.m')
 
 
 ### Example
-Try to start  to publish the file exampleReport.m, using:
+Try to start  to publish the file 'exampleReport.m', using:
 ```
 publish('exampleReport.m','showCode',true)
 ```
 The resulting HTML file is HTML\exampleReport.html
 
 
-##Citation:
+##Citation
+
 Pleas cite:  Samuel E Schmidt. pubSTAT: publication of Statitics, github.com/Samuelemil/pubSTAT ,2022 
 
 
