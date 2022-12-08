@@ -1,5 +1,5 @@
 # pubSTAT: publication of Statitics
-The pubSTAT are aimed publication of statistical results in MATLAB. When doing statistical analyze results are often copy pasted manually into Word or other editors for publication. However this might easily introduce errors and is time consuming. Therefore, I have developed pubSTAT, that is a tool for simple statical analysis where the results are stored in tables. These tables can ealsy be converted to HTML tables using the function plotTable.m and the publish function in MATLAB.
+pubSTAT is aimed publication of statistical results in MATLAB. When doing statistical analyze results are often copy pasted manually into Word or other editors for publication. However this might easily introduce errors and is time consuming. Therefore, I have developed pubSTAT, that is a tool for simple statical analysis where the results are stored in tables. These tables can ealsy be converted to HTML tables using the function plotTable.m and the publish function in MATLAB.
 
 The current version includes 3 types of statistical tables:
  * summeryTable: For basic statistical summery 
