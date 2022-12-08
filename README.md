@@ -43,6 +43,8 @@ The resulting HTML file is HTML\exampleReport.html
 Pleas cite:  Samuel E Schmidt. pubSTAT: publication of Statitics, github.com/Samuelemil/pubSTAT ,2022 
 
 
+[![View pubSTAT on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://se.mathworks.com/matlabcentral/fileexchange/121832-pubstat)
+
 ![image](https://user-images.githubusercontent.com/14206853/206318233-2e121f3c-29f8-4735-a2b3-751fbab92dcb.png)
 
 
