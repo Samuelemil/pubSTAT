@@ -1,11 +1,11 @@
-function [ Res, AUC] = aucTables(ta,t,Threshold,nboot,grp, plotROC,scoresOnSamePlot)
+function [ Res, AUC,pairSTAT] = aucTables(ta,t,Threshold,nboot,grp, plotROC,scoresOnSamePlot,pairedAnalysis)
 %[ Res , AUC] = aucTables(ta,t,Threshold,nboot,grp)
 %
 % Estimates the AUC NPV  of the table ta.
 % ta:           Tables with the scores for analysis (NxM)
 % t:            Patient type (Dichotomous vector, binary or categorical
 %               (Nx1)), I cases of categorical the 2. ordinal value is used
-%               as a positve class 
+%               as a positve class
 % Threshold:    Threshold for classification calcualtions (1x1 if one score or the
 %               same for all scores or 1xM vector if different thresholds for each score )
 % nboot:        Number of bootstraping runs for AUC CI calcualtion.
@@ -13,6 +13,7 @@ function [ Res, AUC] = aucTables(ta,t,Threshold,nboot,grp, plotROC,scoresOnSameP
 % grp:          Groupping variable, categorical vector (Nx1))
 % plotROC:      Plot roc curve (default=1)
 % scoresOnSamePlot:  Plot AUC from different scores in the same plot (default=0)
+% pairedAnalysis:    compare significans levels across scores
 %
 % Res:          Results table
 % AUC:          Table with numeric AUC values
@@ -58,10 +59,10 @@ arguments
     grp {mustBeLogicalOrCategoricalEmpty(grp),mustHaveSameNrOfRows(ta,grp)} =[]
     plotROC=1
     scoresOnSamePlot=0
-
+    pairedAnalysis=0
 end
 
-
+pairSTAT=[];
 % if input ta is not a table, but a vector make it a table
 if ~istable(ta)
     varName = inputname(1);
@@ -83,14 +84,16 @@ if length(ut)>2
     return
 end
 
+
+has_t=~isundefined(t);
 % prepare variables
 hasRocPlot=1;
 k=0;
 Res=table;
 
- if plotROC
-clf
- end
+if plotROC
+    clf
+end
 
 if  ~isempty(grp)
 
@@ -122,12 +125,13 @@ for i=1:size(ta,2)
     k=k+1;
 
     if ~isempty(    Threshold )
-
+        % statistic
         [npv(1,1), npv(2:3,1)] = binofit(sum(x(t==ut(1) )<=Threshold(i)),sum(x(t==ut(1) | t==ut(2) )<=Threshold(i)));
         [ppv(1,1), ppv(2:3,1)] = binofit(sum(x(t==ut(2) )>Threshold(i)),sum(x(t==ut(1) | t==ut(2) )>Threshold(i)));
         [sens(1,1), sens(2:3,1)] = binofit(sum(x(t==ut(2)) >Threshold(i)),sum(t==ut(2) & ~isnan(x)));
         [specs(1,1), specs(2:3,1)] = binofit(sum(x(t==ut(1)) <=Threshold(i)),sum(t==ut(1) & ~isnan(x)));
-
+        [ruleOut(1,1), ruleOut(2:3,1)] = binofit(sum(x(has_t) <=Threshold(i)),sum(has_t & ~isnan(x)));
+        [ruleIn(1,1), ruleIn(2:3,1)] = binofit(sum(x(has_t) >Threshold(i)),sum(has_t & ~isnan(x)));
         t2x2(1,1)= sum(x(t==ut(1) )<=Threshold(i));
         t2x2(2,1)= sum(x(t==ut(2) )<=Threshold(i));
         t2x2(1,2)= sum(x(t==ut(1) )>Threshold(i));
@@ -137,15 +141,20 @@ for i=1:size(ta,2)
         LRP(1,1)=sens(1,1)/(1-specs(1,1));
         % Likelihood ratio positive
         LRN(1,1)=(1-sens(1,1))/specs(1,1);
+        if pairedAnalysis
+            topair(:,i)=x>Threshold(i);
+        end
     end
 
     % estimate AUC
     [x_a y_a T au]=perfcurve(t,x,ut(2));
     auc=au(1);
 
+
+
     % plot ROC
     if plotROC
-     
+
         if scoresOnSamePlot
 
             if nugrp>2
@@ -218,7 +227,7 @@ for i=1:size(ta,2)
     end
     prv(i,1)=n1(i,1)/(n0(i,1)+n1(i,1));
 
-    % if more that one groups estimate all stat. for each group
+    %% if more that one groups estimate all stat. for each group
     if nugrp>1
 
         for j=1:nugrp
@@ -226,6 +235,7 @@ for i=1:size(ta,2)
 
             xgrp=x(grp==ugrp(j));
             tgrp=t(grp==ugrp(j));
+            has_t_grp=has_t(grp==ugrp(j));
             if ~isempty(xgrp) & sum(tgrp==ut(1))>=1 & sum(tgrp==ut(2))>=1
 
 
@@ -293,6 +303,11 @@ for i=1:size(ta,2)
                     [sens(1,j+1), sens(2:3,j+1)] = binofit(sum(xgrp(tgrp==ut(2)) >Threshold(i)),sum(tgrp==ut(2) & ~isnan(xgrp)));
                     [specs(1,j+1), specs(2:3,j+1)] = binofit(sum(xgrp(tgrp==ut(1)) <=Threshold(i)),sum(tgrp==ut(1) & ~isnan(xgrp)));
 
+                    [ruleOut(1,j+1), ruleOut(2:3,j+1)] = binofit(sum(xgrp(has_t_grp) <=Threshold(i)),sum(has_t_grp & ~isnan(xgrp)));
+                    [ruleIn(1,j+1), ruleIn(2:3,j+1)] = binofit(sum(xgrp(has_t_grp) >Threshold(i)),sum(has_t_grp & ~isnan(xgrp)));
+
+
+
                     t2x2(1,1,j+1)= sum(xgrp(tgrp==ut(1) )<=Threshold(i));
                     t2x2(2,1,j+1)= sum(xgrp(tgrp==ut(2) )<=Threshold(i));
                     t2x2(1,2,j+1)= sum(xgrp(tgrp==ut(1) )>Threshold(i));
@@ -318,6 +333,8 @@ for i=1:size(ta,2)
                 prv(i,j+1)=nan;
                 sens(i,j+1)=nan;
                 specs(i,j+1)=nan;
+                ruleOut(i,j+1)=nan;
+                ruleIn(i,j+1)=nan;
                 t2x2(1,1,j+1)=nan;
                 LRP(1,1,j+1)=nan;
                 LRN(1,1,j+1)=nan;
@@ -325,9 +342,9 @@ for i=1:size(ta,2)
         end
     end
 
+    %% Here all data are written into the result table
     % If VariableDescriptions is not empty use VariableDescriptions as
     % variable name
-
     if isempty(ta.Properties.VariableDescriptions) |  isempty(ta.Properties.VariableDescriptions{i})
         Res(k,1)={ta.Properties.VariableNames(i)};
     else
@@ -410,7 +427,7 @@ for i=1:size(ta,2)
             I=pt==1;
             [ct,chi2,p_ppv,labels]=crosstab(grp(I),t(I));
 
-
+            [~ ,~,p_rule]=crosstab(grp(has_t),pt(has_t));
 
         end
 
@@ -501,6 +518,48 @@ for i=1:size(ta,2)
             Res{end,1+j}= {[num2str(specs(1,j)*100,3)  '% (' num2str(specs(2,j)*100,3)  '-' num2str(specs(3,j)*100,3) '%)']};
         end
 
+        % rule-out
+        if isempty(ta.Properties.VariableDescriptions) |  isempty(ta.Properties.VariableDescriptions{i})
+            if nugrp>1
+                Res{end+1,1}={['  Rule out (' ta.Properties.VariableNames{i} '<=' num2str(Threshold(i)) ')  (p=' num2str(p_rule,4)  ')'   ]};
+            else
+                Res{end+1,1}={['  Rule out (' ta.Properties.VariableNames{i} '<=' num2str(Threshold(i)) ')'   ]};
+            end
+        else
+            if nugrp>1
+                Res{end+1,1}={['  Rule out (' ta.Properties.VariableDescriptions{i} '<=' num2str(Threshold(i)) ')  (p=' num2str(p_rule,4)  ')' ]};
+            else
+
+                Res{end+1,1}={['  Rule out (' ta.Properties.VariableDescriptions{i} '<=' num2str(Threshold(i)) ')' ]};
+            end
+        end
+
+        for j=1:nugrp+1
+            Res{end,1+j}= {[num2str(ruleOut(1,j)*100,3)  '% (' num2str(ruleOut(2,j)*100,3)  '-' num2str(ruleOut(3,j)*100,3) '%)']};
+        end
+
+        % rule in
+        if isempty(ta.Properties.VariableDescriptions) |  isempty(ta.Properties.VariableDescriptions{i})
+            if nugrp>1
+                Res{end+1,1}={['  Rule in (' ta.Properties.VariableNames{i} '>' num2str(Threshold(i)) ')  (p=' num2str(p_rule,4)  ')'   ]};
+            else
+                Res{end+1,1}={['  Rule in (' ta.Properties.VariableNames{i} '>' num2str(Threshold(i)) ')'   ]};
+            end
+        else
+            if nugrp>1
+                Res{end+1,1}={['  Rule in (' ta.Properties.VariableDescriptions{i} '>' num2str(Threshold(i)) ')  (p=' num2str(p_rule,4)  ')' ]};
+            else
+
+                Res{end+1,1}={['  Rule in (' ta.Properties.VariableDescriptions{i} '>' num2str(Threshold(i)) ')' ]};
+            end
+        end
+
+        for j=1:nugrp+1
+            Res{end,1+j}= {[num2str(ruleIn(1,j)*100,3)  '% (' num2str(ruleIn(2,j)*100,3)  '-' num2str(ruleIn(3,j)*100,3) '%)']};
+        end
+
+
+
         % TN
         Res{end+1,1}={['  TN (' ta.Properties.VariableNames{i} '<=' num2str(Threshold(i)) ')'     ]};
 
@@ -547,10 +606,13 @@ for i=1:size(ta,2)
 
 
 
-        if i<size(ta,2)
-            Res{end+1,:}={' '};
-        end
+ 
     end
+
+       if i<size(ta,2)
+            Res{end+1,:}={' '};
+       end
+
 
 
     if plotROC & scoresOnSamePlot==0
@@ -587,31 +649,153 @@ else
 
 end
 
-if scoresOnSamePlot
-    for i=1:length(ta.Properties.VariableNames)
 
-        if ~isempty(ta.Properties.VariableDescriptions) & ~isempty(ta.Properties.VariableDescriptions{i})
-            leg(i)=ta.Properties.VariableDescriptions(i);
-        else
-            leg(i)=ta.Properties.VariableNames(i);
+%% do paired statics analyse
+if  nugrp<2 & size(ta,2)>1 &  pairedAnalysis
+    t_bin=t==ut(2);
+    notnan=~isnan(sum(ta{:,:},2));
+
+    comb=nchoosek(1:size(ta,2),2);
+    pairSTAT=table;
+    for idx=1:size(comb,1)
+        tmpcell= AUC_compare_correlated(ta{notnan & has_t,[comb(idx,:) ]}, t_bin(notnan & has_t));
+        auc_p(idx)= tmpcell{end};
+        if ~isempty(    Threshold )
+            % McNemars Sensitivty
+            ctab = crosstab(topair(notnan & t==ut(2),comb(idx,1)),topair(notnan & t==ut(2),comb(idx,2)));
+            p_sen_pair(idx)=1-chi2cdf(((ctab(2,1)-ctab(1,2))^2)./(ctab(2,1)+ctab(1,2)),1);
+
+            % McNemars Specificity
+            ctab = crosstab(topair(notnan & t==ut(1),comb(idx,1)),topair(notnan & t==ut(1),comb(idx,2)));
+            p_spec_pair(idx)=1-chi2cdf(((ctab(2,1)-ctab(1,2))^2)./(ctab(2,1)+ctab(1,2)),1);
+            
+             % chisq npv
+           ns1=t_bin(topair(:,comb(idx,1))==0 & notnan  & has_t);
+           ns2=t_bin(topair(:,comb(idx,2))==0 & notnan  & has_t);
+           [c ,chi, p_npv_pair(idx)]=crosstab([ns1; ns2],[zeros(length(ns1),1) ; ones(length(ns2),1)]);
+
+
+           % chisq ppv
+           ns1=t_bin(topair(:,comb(idx,1))==1 & notnan  & has_t);
+           ns2=t_bin(topair(:,comb(idx,2))==1 & notnan  & has_t);
+           [c ,chi, p_ppv_pair(idx)]=crosstab([ns1; ns2],[zeros(length(ns1),1) ; ones(length(ns2),1)]);
+
+
+             % chisq rule-out
+           ns1=topair( notnan  & has_t,comb(idx,1));
+           ns2=topair( notnan  & has_t,comb(idx,2));
+
+            
+            % McNemars Specificity
+            ctab = crosstab(topair(notnan & has_t,comb(idx,1)),topair(notnan & has_t,comb(idx,2)));
+             p_rule_pair(idx)=1-chi2cdf(((ctab(2,1)-ctab(1,2))^2)./(ctab(2,1)+ctab(1,2)),1);
+
+
         end
+
+        score1=ta.Properties.VariableDescriptions(comb(idx,1));
+        score2=ta.Properties.VariableDescriptions(comb(idx,2));
+
+        if isempty( score1{:})
+            score1=ta.Properties.VariableNames(comb(idx,1));
+        end
+
+
+        if isempty( score2{:})
+            score2=ta.Properties.VariableNames(comb(idx,2));
+        end
+        pairSTAT.('Paired analyse')(idx,1)={[score1{:} ' - ' score2{:}]};
+
+
 
     end
 
-    legend(leg, 'Location','southeast')
-else
-    if  nugrp>1
-        legend(colNames([2 find(hasRocPlot)+2]), 'Location','southeast')
+
+    pairSTAT.('auc p-value')(:,1)=auc_p;
+    if ~isempty(    Threshold )
+        pairSTAT.('Sensitivity  p-value')(:,1)=p_sen_pair;
+        pairSTAT.('Specificity  p-value')(:,1)=p_spec_pair;
+        pairSTAT.('NPV  p-value')(:,1)=p_npv_pair;
+        pairSTAT.('PPV  p-value')(:,1)=p_ppv_pair;
+        pairSTAT.('Rule IN/OUT p-value')(:,1)=p_rule_pair;
     end
 end
 
+%% plot ROC curve
+
+if plotROC
+    if scoresOnSamePlot
+        for i=1:length(ta.Properties.VariableNames)
+
+            if ~isempty(ta.Properties.VariableDescriptions) & ~isempty(ta.Properties.VariableDescriptions{i})
+                leg(i)=ta.Properties.VariableDescriptions(i);
+            else
+                leg(i)=ta.Properties.VariableNames(i);
+            end
+
+        end
+
+        legend(leg, 'Location','southeast')
+    else
+        if  nugrp>1
+            legend(colNames([2 find(hasRocPlot)+2]), 'Location','southeast')
+        end
+    end
+end
 Res.Properties.VariableNames=colNames;
 
 
+%% Rearrange the table to paired presentation
+if  nugrp<2 & size(ta,2)>1 &  pairedAnalysis
+    nrscore=size(ta,2);
+    nrlines=(size(Res,1)-nrscore+1)/nrscore;
+    r=1:nrlines;
+    r=Res(1:nrlines,1);
+    for i=1:nrscore
+
+
+        tmp=Res([1:nrlines]+(i-1)*nrlines+i-1,2);
+        if isempty(ta.Properties.VariableDescriptions) |  isempty(ta.Properties.VariableDescriptions{i})
+
+            tmp.Properties.VariableNames(1)=ta.Properties.VariableNames(i);
+
+        else
+
+
+            tmp.Properties.VariableNames(1)=ta.Properties.VariableDescriptions(i);
+        end
+        r=[r tmp];
+    end
+
+
+    for i=1:size(r,1)
+
+        idx_trm=  find(r{i,1}{:}== '(', 1, 'last');
+        if ~isempty(idx_trm)
+
+            r{i,1}{:}(idx_trm-1:end)=[];
+        end
+
+    end
+       if ~isempty(    Threshold )
+    r(end+1,1)={' Binary classification threshold'};
+    for i=1:nrscore
+        r(end,i+1)={num2str(Threshold(i))};
+    end
+
+       end
+       r=[r(1:5,:); r(end,:); r(6:end-1,:)];
+ Res=r;
+end
+
+
+%%  AUC store AUC data in  array 
+Res.Properties.VariableNames(1)={'-'};
 AUC=array2table(AUC);
 AUC.Properties.RowNames= ta.Properties.VariableNames;
-
 AUC.Properties.VariableNames= colNames(2:end);
+
+
 
 % if plotROC
 %     % Resize figure to double size
