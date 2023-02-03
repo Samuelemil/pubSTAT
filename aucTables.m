@@ -1,4 +1,4 @@
-function [ Res, AUC,pairSTAT] = aucTables(ta,t,Threshold,nboot,grp, plotROC,scoresOnSamePlot,pairedAnalysis)
+function [ Res, AUC,pairSTAT] = aucTables(ta,t,Threshold,nboot,grp, plotROC,scoresOnSamePlot,pairedAnalysis, options)
 %[ Res , AUC] = aucTables(ta,t,Threshold,nboot,grp)
 %
 % Estimates the AUC NPV  of the table ta.
@@ -13,8 +13,11 @@ function [ Res, AUC,pairSTAT] = aucTables(ta,t,Threshold,nboot,grp, plotROC,scor
 % grp:          Groupping variable, categorical vector (Nx1))
 % plotROC:      Plot roc curve (default=1)
 % scoresOnSamePlot:  Plot AUC from different scores in the same plot (default=0)
-% pairedAnalysis:    compare significans levels across scores
+% pairedAnalysis:    compare significans levels across scores (note no grp's can be defined)
+% Name-Value Arguments:  
 %
+% positiveClass {'posclass'} defienction of the postive class in t 
+% 
 % Res:          Results table
 % AUC:          Table with numeric AUC values
 %
@@ -60,6 +63,7 @@ arguments
     plotROC=1
     scoresOnSamePlot=0
     pairedAnalysis=0
+    options.positiveClass=[]
 end
 
 pairSTAT=[];
@@ -78,12 +82,21 @@ end
 
 
 ut=categories(t);
+
 if length(ut)>2
     disp('Error : patient type has to be Dichotomous!')
     Res=table;
     return
 end
 
+
+% postive outcome is not number 2 revers the order of categories
+if ~isempty(options.positiveClass)
+
+     if ut(2)~=categorical({options.positiveClass})
+        ut=ut([2 1]);
+     end
+end
 
 has_t=~isundefined(t);
 % prepare variables
@@ -648,6 +661,7 @@ else
     colNames={'Vars','All'}  ;
 
 end
+
 
 
 %% do paired statics analyse
