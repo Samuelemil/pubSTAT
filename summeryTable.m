@@ -5,7 +5,7 @@ function Res=summeryTable(ta,grp)
 %
 % Res=summeryTable(ta,grp)
 %  ta:  Table including the variable for analyse. Suported datatypes are: categorical, Logical and numeric
-%  grp: Grouping variable
+%  grp: Grouping variable (optional)
 %
 %  Res: Results table
 %
@@ -49,6 +49,10 @@ function Res=summeryTable(ta,grp)
 
 k=0;
 Res=table;
+
+
+
+% in case defined groups prepared the grp variale ot categorical 
 if nargin>1
 
 
@@ -75,6 +79,8 @@ end
 
 
 warning('off','MATLAB:table:RowsAddedExistingVars');
+
+% bulid the table 
 for i=1:size(ta,2)
 
 
@@ -146,7 +152,7 @@ for i=1:size(ta,2)
             end
         end
 
-        % add statics for numeric datat to table
+        % add statics for numeric data to table
         if isempty(ta.Properties.VariableDescriptions) |  isempty(ta.Properties.VariableDescriptions{i})
             Res(k,1)={ta.Properties.VariableNames(i)};
         else
@@ -208,13 +214,13 @@ for i=1:size(ta,2)
         else
             Res(k,1)={cellstr([ta.Properties.VariableDescriptions{i}  '(N,(%))'])};
         end
-
+       
         if nugrp>1 % estimate p-value for categorical group data
             x=removecats(ta{:,i});
             [c ,ch,p]=crosstab(x,grp);
             temp_str=Res{k,1}{:};
             Res(k,1)={cellstr([temp_str ' (p=' num2str(p) ')'] )};
-
+         
         end
 
         Res{end,2}={''};
@@ -238,10 +244,10 @@ for i=1:size(ta,2)
 
             for j=1:nugrp+1
                 if j>1
-                    Res{end,1+j}= {[num2str(N(k,j)) ' (' num2str(100*N(k,j)/sum(grp==ugrp(j-1)),3) '%)']};
-
+                    Res{end,1+j}= {[num2str(N(k,j)) ' (' num2str(100*N(k,j)/sum(grp==ugrp(j-1) & ~isundefined( ta{:,i})),3) '%)']};
+                     Res{end,1+j}=strrep( Res{end,1+j},'(NaN%)','');
                 else
-                    Res{end,1+j}= {[num2str(N(k,j)) ' (' num2str(100*N(k,j)/size(ta,1),3) '%)']};
+                    Res{end,1+j}= {[num2str(N(k,j)) ' (' num2str(100*N(k,j)/sum(N(:,j)),3) '%)']};
 
                 end
             end
@@ -288,7 +294,7 @@ warning('on','MATLAB:table:RowsAddedExistingVars')
 grpNames=ugrp;
 if nugrp>0
     for i=1:length(ugrp)
-        grpNames{i}=strrep(grpNames{i},'-','_');
+      %  grpNames{i}=strrep(grpNames{i},'-','_');
     end
 
     colNames={'Vars','All',grpNames{:}};
