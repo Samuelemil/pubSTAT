@@ -706,10 +706,14 @@ if  nugrp<2 & size(ta,2)>1 &  pairedAnalysis
 
 
         end
+        if isempty(ta.Properties.VariableDescriptions)
+        score1=ta.Properties.VariableNames(comb(idx,1));
+        score2=ta.Properties.VariableNames(comb(idx,2));
 
+        else
         score1=ta.Properties.VariableDescriptions(comb(idx,1));
         score2=ta.Properties.VariableDescriptions(comb(idx,2));
-
+        end
         if isempty( score1{:})
             score1=ta.Properties.VariableNames(comb(idx,1));
         end

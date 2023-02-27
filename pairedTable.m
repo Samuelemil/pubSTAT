@@ -123,6 +123,8 @@ function Res=addanalyse(ta)
 warning('off');
 Res=table;
 
+n_all=sum(isnan(ta{:,:})==0);
+
 touse=~isnan(sum(ta{:,:},2));
 % estimate statistics for all data
 u=nanmean(ta{  touse,:}) ;
@@ -143,10 +145,12 @@ end
 
 
 Res(1,1)={'n'};
-Res(2,1)={['Mean: (p='    pValueStr ')']};
+Res(2,1)={'n (In analyse)'};
+Res(3,1)={['Mean: (p='    pValueStr ')']};
 for i=1:size(ta,2)
-    Res(1,i+1)={[num2str(n(i))    ]};
-    Res(2,i+1)={[ num2str(u(i),3)  setstr(177)  num2str(sd(i),3)  ]};
+     Res(1,i+1)={[num2str(n_all(i))    ]};
+    Res(2,i+1)={[num2str(n(i))    ]};
+    Res(3,i+1)={[ num2str(u(i),3)  setstr(177)  num2str(sd(i),3)  ]};
 end
 
 end
