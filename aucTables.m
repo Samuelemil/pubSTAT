@@ -677,12 +677,20 @@ if  nugrp<2 & size(ta,2)>1 &  pairedAnalysis
         if ~isempty(    Threshold )
             % McNemars Sensitivty
             ctab = crosstab(topair(notnan & t==ut(2),comb(idx,1)),topair(notnan & t==ut(2),comb(idx,2)));
+            if size(ctab,1)>1
             p_sen_pair(idx)=1-chi2cdf(((ctab(2,1)-ctab(1,2))^2)./(ctab(2,1)+ctab(1,2)),1);
+            else
+                p_sen_pair(idx)=nan;
 
+            end
             % McNemars Specificity
             ctab = crosstab(topair(notnan & t==ut(1),comb(idx,1)),topair(notnan & t==ut(1),comb(idx,2)));
+              if size(ctab,1)>1
+
             p_spec_pair(idx)=1-chi2cdf(((ctab(2,1)-ctab(1,2))^2)./(ctab(2,1)+ctab(1,2)),1);
-            
+              else
+                    p_spec_pair(idx)=nan;
+              end
              % chisq npv
            ns1=t_bin(topair(:,comb(idx,1))==0 & notnan  & has_t);
            ns2=t_bin(topair(:,comb(idx,2))==0 & notnan  & has_t);

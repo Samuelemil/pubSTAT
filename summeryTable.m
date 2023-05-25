@@ -1,4 +1,12 @@
-function Res=summeryTable(ta,grp)
+function Res=summeryTable(ta,grp,options)
+
+arguments
+
+    ta
+    grp =[]
+    options.Compact = false
+end
+
 %
 % Makes a summery table of the variables in the table ta. If grp is assigned the
 % summery statistics are done in each grp
@@ -47,12 +55,12 @@ function Res=summeryTable(ta,grp)
 %  Author: Samuel E Schmidt sschmidt@hst.aau.dk
 
 
-k=0;
+
 Res=table;
 
 
 
-% in case defined groups prepared the grp variale ot categorical 
+% in case defined groups prepared the grp variale ot categorical
 if nargin>1
 
 
@@ -79,8 +87,24 @@ end
 
 
 warning('off','MATLAB:table:RowsAddedExistingVars');
+if options.Compact
+    k=1;
+    Res(k,1)={'n'};
+    n=size(ta,1);
+    Res(k,2)= {num2str(n)};
 
-% bulid the table 
+    for j=1:nugrp
+
+        n(j)=sum(grp==ugrp(j));
+
+
+        Res{k,j+2}={num2str(n(j))};
+    end
+else
+    k=0;
+end
+
+% bulid the table
 for i=1:size(ta,2)
 
 
@@ -105,6 +129,8 @@ for i=1:size(ta,2)
         else
             Res(k,1)={ta.Properties.VariableDescriptions(i)};
         end
+
+
         Res{end,2}={''};
 
         if nugrp>0
@@ -161,7 +187,7 @@ for i=1:size(ta,2)
         if isempty(ta.Properties.VariableUnits) |  isempty(ta.Properties.VariableUnits{i})
 
         else
-           
+
             e=cellstr([ char(Res{k,1}) ' ('  ta.Properties.VariableUnits{i} ')']);
             Res(k,1)={e};
         end
@@ -170,41 +196,59 @@ for i=1:size(ta,2)
         if nugrp>0
             Res{end,2:nugrp+2}={''};
         end
+        if ~options.Compact
+            Res{end+1,1}={' N'};
 
-        Res{end+1,1}={' N'};
-        for j=1:nugrp+1
-            Res{end,1+j}= {num2str(n(j))};
+            for j=1:nugrp+1
+                Res{end,1+j}= {num2str(n(j))};
+            end
+
+
         end
+
 
         % estiate p-value
         if nugrp>1
             [p]=anova1(ta{:,i},grp,'off');
-            Res{end+1,1}={[' Mean' setstr(177)  'SD (p=' num2str(p,3) ')']};
-        else
-            Res{end+1,1}={[ ' Mean' setstr(177)  'SD'  ]};
-        end
 
+            if ~options.Compact
 
-        for j=1:nugrp+1
-            Res{end,1+j}= {[ num2str(u(j),3) setstr(177) num2str(sd(j),3)]};
-        end
-
-        Res{end+1,1}={' Median(IQR)'};
-        for j=1:nugrp+1
-            Res{end,1+j}= {[num2str(m(j),3) '(' num2str(q(1,j),3) '-' num2str(q(2,j),3) ')']};
-        end
-        Res{end+1,1}={' Min-Max'};
-        for j=1:nugrp+1
-            cif=floor( log10(ma(j)));
-
-            if cif>=2
-                deci=cif+2;
+                Res{end+1,1}={[' Mean' setstr(177)  'SD (p=' num2str(p,3) ')']};
             else
-                deci=3;
+                Res{end,1}={[char(Res{end,1}) ' (p=' num2str(p,3) ')']};
             end
-            Res{end,1+j}= {['(' num2str(mi(j),deci) '-' num2str(ma(j),deci) ')']};
+
+        else
+            if ~options.Compact
+
+
+                Res{end+1,1}={[ ' Mean' setstr(177)  'SD'  ]};
+            else
+
+            end
         end
 
+
+        for j=1:nugrp+1
+            Res{end,1+j}= {[ num2str(u(j),'%.1f') setstr(177) num2str(sd(j),3)]};
+        end
+        if ~options.Compact
+            Res{end+1,1}={' Median(IQR)'};
+            for j=1:nugrp+1
+                Res{end,1+j}= {[num2str(m(j),3) '(' num2str(q(1,j),3) '-' num2str(q(2,j),3) ')']};
+            end
+            Res{end+1,1}={' Min-Max'};
+            for j=1:nugrp+1
+                cif=floor( log10(ma(j)));
+
+                if cif>=2
+                    deci=cif+2;
+                else
+                    deci=3;
+                end
+                Res{end,1+j}= {['(' num2str(mi(j),deci) '-' num2str(ma(j),deci) ')']};
+            end
+        end
 
     elseif iscategorical(ta{:,i}) % In case of categorical datatype
         k=k+1;
@@ -214,26 +258,35 @@ for i=1:size(ta,2)
         else
             Res(k,1)={cellstr([ta.Properties.VariableDescriptions{i}  '(N,(%))'])};
         end
-       
+
         if nugrp>1 % estimate p-value for categorical group data
             x=removecats(ta{:,i});
             [c ,ch,p]=crosstab(x,grp);
             temp_str=Res{k,1}{:};
             Res(k,1)={cellstr([temp_str ' (p=' num2str(p) ')'] )};
-         
+
         end
 
         Res{end,2}={''};
 
         C = categories(ta{:,i});
         N=countcats(ta{:,i});
-        Res{end,2}={[num2str(sum(N))]};
+        if   ~options.Compact
+            Res{end,2}={[num2str(sum(N))]};
+        else
+
+            Res{end,2}={''};
+        end
 
         if nugrp>0 % estimate n for categorical group data
             for j=1:nugrp
                 n=countcats(ta{ grp==ugrp(j),i});
                 N(:,j+1)=n;
-                Res{end,j+2}={[num2str(sum(N(:,j+1)))]};
+                if   ~options.Compact
+                    Res{end,j+2}={[num2str(sum(N(:,j+1)))]};
+                else
+                    Res{end,j+2}={''};
+                end
             end
         end
 
@@ -245,7 +298,7 @@ for i=1:size(ta,2)
             for j=1:nugrp+1
                 if j>1
                     Res{end,1+j}= {[num2str(N(k,j)) ' (' num2str(100*N(k,j)/sum(grp==ugrp(j-1) & ~isundefined( ta{:,i})),3) '%)']};
-                     Res{end,1+j}=strrep( Res{end,1+j},'(NaN%)','');
+                    Res{end,1+j}=strrep( Res{end,1+j},'(NaN%)','');
                 else
                     Res{end,1+j}= {[num2str(N(k,j)) ' (' num2str(100*N(k,j)/sum(N(:,j)),3) '%)']};
 
@@ -294,7 +347,7 @@ warning('on','MATLAB:table:RowsAddedExistingVars')
 grpNames=ugrp;
 if nugrp>0
     for i=1:length(ugrp)
-      %  grpNames{i}=strrep(grpNames{i},'-','_');
+        %  grpNames{i}=strrep(grpNames{i},'-','_');
     end
 
     colNames={'Vars','All',grpNames{:}};

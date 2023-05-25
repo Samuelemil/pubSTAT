@@ -123,19 +123,22 @@ function Res=addanalyse(ta)
 warning('off');
 Res=table;
 
-n_all=sum(isnan(ta{:,:})==0);
+n_all=sum(isnan(ta{:,:})==0,1);
 
 touse=~isnan(sum(ta{:,:},2));
 % estimate statistics for all data
-u=nanmean(ta{  touse,:}) ;
-sd=nanstd(ta{touse,:});
-n=sum(isnan(ta{touse,:})==0);
+u=nanmean(ta{  touse,:},1);
+sd=nanstd(ta{touse,:},[],1);
+n=sum(isnan(ta{touse,:})==0,1);
 
 
 
-
+if ~isempty(ta(  touse,:))
 pValue=rep1wayanova(ta(  touse,:));
+else
 
+pValue='';
+end
 if pValue<0.001
     pValueStr= '<0.001';
 else
@@ -148,6 +151,7 @@ Res(1,1)={'n'};
 Res(2,1)={'n (In analyse)'};
 Res(3,1)={['Mean: (p='    pValueStr ')']};
 for i=1:size(ta,2)
+
      Res(1,i+1)={[num2str(n_all(i))    ]};
     Res(2,i+1)={[num2str(n(i))    ]};
     Res(3,i+1)={[ num2str(u(i),3)  setstr(177)  num2str(sd(i),3)  ]};
