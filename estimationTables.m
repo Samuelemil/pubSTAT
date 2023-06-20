@@ -82,12 +82,13 @@ for i=1:size(ta,2)
     for j=1:nugrp+1
         
         Res{end,1+j}= {[num2str(b(j),2) ' (' num2str(bci(1,j),2)  ',' num2str(bci(2,j),2) ')' ]};
-    end
-
-     if  b_sig_p(:,j)<0.05
+             if  b_sig_p(:,j)<0.05
 
  Res{end,1+j}={[ char(Res{end,1+j}) '*']};
      end
+
+    end
+
 
     Res{end+1,1}={' MAPE (%)'};
     
@@ -166,9 +167,10 @@ ts = tinv([0.025 0.975], N-1);
 m_ci=m+  100*(ts*SEM);
 see=sqrt(nansum((predicted-ref).^2)./(sum(~isnan(predicted-ref))-2));
 bias=nanmean(predicted-ref);
-bias_ci=[bias-1.96*nanstd(predicted-ref)/sqrt(N) bias+1.96*nanstd(predicted-ref)/sqrt(N)];
+%bias_ci=[bias-1.96*nanstd(predicted-ref)/sqrt(N) bias+1.96*nanstd(predicted-ref)/sqrt(N)];
 [r,~, rciLow, rcihigh]=corrcoef(predicted,ref,'rows','pairwise');
 r=r(2,1);
 rci=[rciLow(2,1) rcihigh(2,1) ];
-[b_sig b_sig_p]=ttest(predicted-ref)
+[b_sig b_sig_p bias_ci]=ttest(predicted-ref);
+
 end
