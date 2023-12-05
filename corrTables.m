@@ -68,17 +68,23 @@ for i=1:size(ta,2)
     end
 
     k=k+1;
-
+   
+    if isreal(x) 
     [r,p]=corr(x,y,'rows','pairwise');
+    
+    else
+    r=nan;
+    p=nan;
+    end
     rs=r^2;
     n=sum(isnan(x)==0 & isnan(y)==0);
-
+    
 
     if nugrp>1
         for j=1:nugrp
             xgrp=x(grp==ugrp(j));
             ygrp=y(grp==ugrp(j));
-            if ~isempty(xgrp)
+            if ~isempty(xgrp) & isreal(xgrp)
                 %[r,p]=corr(x,y,'rows','pairwise');
                 [r(1,j+1),p(1,j+1)]=corr(xgrp,ygrp,'rows','pairwise');
                 n(1,j+1)=sum(isnan(xgrp)==0 & isnan(ygrp)==0);
