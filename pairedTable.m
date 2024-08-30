@@ -143,7 +143,7 @@ if pValue<0.001
     pValueStr= '<0.001';
 else
 
-    pValueStr= num2str(pValue,3);
+    pValueStr= num2str(pValue(1),3);
 end
 
 

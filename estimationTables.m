@@ -172,5 +172,6 @@ bias=nanmean(predicted-ref);
 r=r(2,1);
 rci=[rciLow(2,1) rcihigh(2,1) ];
 [b_sig b_sig_p bias_ci]=ttest(predicted-ref);
+R2=1-sum((predicted-ref).^2)/sum((ref-mean(ref)).^2)
 
 end
