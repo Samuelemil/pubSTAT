@@ -34,7 +34,7 @@ for i=1:size(ta,2)
     
     k=k+1;
  
-    [ma ,p,maci(:,1),b ,r , bci(:,1),rci(:,1) , b_sig_p(:,1)]=regressionMeasures(x,y);
+    [ma ,p,maci(:,1),b ,r , bci(:,1),rci(:,1) , b_sig_p(:,1),r2(1,1) ,r2ci(:,1)]=regressionMeasures(x,y);
    
     rs=ma^2;
     n=sum(isnan(x)==0 & isnan(y)==0);
@@ -45,7 +45,7 @@ for i=1:size(ta,2)
             xgrp=x(grp==ugrp(j));
             ygrp=y(grp==ugrp(j));
             if ~isempty(xgrp)
-                [ma(1,j+1)  p(1,j+1),maci(:,j+1), b(1,j+1),r(1,j+1) , bci(:,j+1),rci(:,j+1), b_sig_p(:,j+1)]=regressionMeasures(xgrp,ygrp);
+                [ma(1,j+1)  p(1,j+1),maci(:,j+1), b(1,j+1),r(1,j+1) , bci(:,j+1),rci(:,j+1), b_sig_p(:,j+1),r2(1,j+1) ,r2ci(:,j+1)]=regressionMeasures(xgrp,ygrp);
            
                 n(1,j+1)=sum(isnan(xgrp)==0 & isnan(ygrp)==0);
             else
@@ -103,6 +103,15 @@ for i=1:size(ta,2)
         Res{end,1+j}= {[num2str(r(j),3)  ' (' num2str(rci(1,j),2)  ',' num2str(rci(2,j),2) ')' ] };
     end
 
+
+        Res{end+1,1}={' r^2'};
+    
+    for j=1:nugrp+1
+        
+        Res{end,1+j}= {[num2str(r2(j),3)  ' (' num2str(r2ci(1,j),2)  ',' num2str(r2ci(2,j),2) ')' ] };
+    end
+
+
     Res{end+1,1}={' SEE'};
     
     for j=1:nugrp+1
@@ -156,7 +165,7 @@ end
 
 end
 
-function [m see m_ci bias r bias_ci rci b_sig_p]=regressionMeasures(predicted,ref)
+function [m see m_ci bias r bias_ci rci b_sig_p r2 r2ci]=regressionMeasures(predicted,ref)
 
 APE=abs(predicted-ref)./ref;
 m=nanmean(APE)*100;
@@ -172,5 +181,5 @@ bias=nanmean(predicted-ref);
 r=r(2,1);
 rci=[rciLow(2,1) rcihigh(2,1) ];
 [b_sig b_sig_p bias_ci]=ttest(predicted-ref);
-
+[r2 r2ci]=rsquare(ref,predicted);
 end
