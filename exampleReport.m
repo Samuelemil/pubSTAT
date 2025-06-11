@@ -26,19 +26,19 @@ T.Properties.VariableUnits('Systolic')={'mmHg'};
 T.Properties.VariableUnits('Diastolic')={'mmHg'};
 
 %% Table 1: Data summary
-t1=summeryTable(T);
+t1=summaryTable(T);
 
 
 plotTable(t1)
 
 
 %% Table 2: Self Assessed Health Status vs blood pressure 
-t2=summeryTable(T(:,{'Systolic','Diastolic'}),T.SelfAssessedHealthStatus);
+t2=summaryTable(T(:,{'Systolic','Diastolic'}),T.SelfAssessedHealthStatus);
 plotTable(t2)
 
 
 %% Table 3: Smoking vs blood pressure 
-t3=summeryTable(T(:,{'Systolic','Diastolic'}),T.Smoker);
+t3=summaryTable(T(:,{'Systolic','Diastolic'}),T.Smoker);
 
 plotTable(t3)
 
