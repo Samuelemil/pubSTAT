@@ -1,9 +1,9 @@
-function Res=summeryTable(ta,grp)
+function Res=summaryTable(ta,grp)
 %
-% Makes a summery table of the variables in the table ta. If grp is assigned the
-% summery statistics are done in each grp
+% Makes a summary table of the variables in the table ta. If grp is assigned the
+% summary statistics are done in each grp
 %
-% Res=summeryTable(ta,grp)
+% Res=summaryTable(ta,grp)
 %  ta:  Table including the variable for analyse. Suported datatypes are: categorical, Logical and numeric
 %  grp: Grouping variable
 %
@@ -19,20 +19,20 @@ function Res=summeryTable(ta,grp)
 %   T = table(Gender,Age,Height,Weight,Smoker,Systolic,Diastolic);
 %   T=convertvars(T,{'Gender'},'categorical') % makes 'Gender' categorical
 %
-%   To get summery statistics of the whole dataset
+%   To get summary statistics of the whole dataset
 %
-%   Res=summeryTable(T)
+%   Res=summaryTable(T)
 %
-%   To get the summery statistics of the whole dataset acording to
+%   To get the summary statistics of the whole dataset acording to
 %   gender
 %
-%   Res=summeryTable(T,T.Gender)
+%   Res=summaryTable(T,T.Gender)
 %
 %
-%   To get the summery statistics of only Age, Diastolic & Systolic acording to
+%   To get the summary statistics of only Age, Diastolic & Systolic acording to
 %   gender
 %
-%   Res=summeryTable(T(:,{'Age','Systolic','Diastolic'}),T.Gender)
+%   Res=summaryTable(T(:,{'Age','Systolic','Diastolic'}),T.Gender)
 %
 %
 % Tip:  To replace varibale names with more describing names use
