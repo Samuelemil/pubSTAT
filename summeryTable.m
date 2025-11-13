@@ -6,6 +6,9 @@ arguments
     grp =[]
     options.Compact = false
     options.StatisticalMethod  {mustBeMember(options.StatisticalMethod,{'anova-ttest','poisson','rank','kstest','kruskalwallis'})} = {}
+    options.SumNumericalValues  = false
+    options.convertpseudoLogicals  = true
+
 end
 
 %
@@ -13,18 +16,21 @@ end
 % summery statistics are done in each grp
 %
 % Res=summeryTable(ta,grp)
-%  ta:  Table including the variable for analyse. Suported datatypes are: categorical, Logical and numeric
+%  ta:  Table including the variables for analyze. Supported datatypes are: categorical, Logical and numeric
 %  grp: Grouping variable (optional)
-%
-% Name-Value Arguments
-%      Compact: True removes median estimates 
-%      StatisticalMethod: 'anova-ttest'|'poisson'|'rank'|'kstest'|'kruskalwallis'
 %
 %  Res: Results table
 %
-% * For categorical variables numbers and propotions are counted
-% * Logical variable numbers and propotions are counted
-% * For continues variables a mean,STD, Median,(IQR), Min & max are calualted
+% Name-Value Arguments
+%      Compact: True removes Median,(IQR), Min & max estimates
+%      StatisticalMethod: 'anova-ttest'|'poisson'|'rank'|'kstest'|'kruskalwallis'
+%      options.SumNumericalValues
+
+%
+% * For categorical variables numbers and proportions are counted
+% * Logical variable numbers and proportions are counted
+% * For continues variables a mean,STD, Median,(IQR), Min & max are
+%   calculated as default
 %
 %
 % Examples using Matlab dataset:
@@ -36,13 +42,13 @@ end
 %
 %   Res=summeryTable(T)
 %
-%   To get the summery statistics of the whole dataset acording to
+%   To get the summery statistics of the whole dataset according to
 %   gender
 %
 %   Res=summeryTable(T,T.Gender)
 %
 %
-%   To get the summery statistics of only Age, Diastolic & Systolic acording to
+%   To get the summery statistics of only Age, Diastolic & Systolic according to
 %   gender
 %
 %   Res=summeryTable(T(:,{'Age','Systolic','Diastolic'}),T.Gender)
@@ -65,7 +71,7 @@ Res=table;
 
 
 
-% in case defined groups prepared the grp variale ot categorical
+% in case defined groups prepared the grp variable as categorical
 if nargin>1
 
 
@@ -109,8 +115,8 @@ else
     k=0;
 end
 
-if ~isempty( options.StatisticalMethod)  
-    
+if ~isempty( options.StatisticalMethod)
+
     options.StatisticalMethod=categorical( options.StatisticalMethod);
 
 end
@@ -118,19 +124,19 @@ end
 % bulid the table
 for i=1:size(ta,2)
 
+    if    options.convertpseudoLogicals
+        % check if  pseudo Logical
+        if isnumeric(ta{:,i}) & sum( ~ismember(ta{:,i},[ 0 1]) &  ~isnan(ta{:,i}))<=0
+            if sum(isnan(ta{:,i}))==0
 
-    % check if  pseudoLogical
-    if isnumeric(ta{:,i}) & sum( ~ismember(ta{:,i},[ 0 1]) &  ~isnan(ta{:,i}))<=0
-        if sum(isnan(ta{:,i}))==0
+                ta.(ta.Properties.VariableNames{i})=logical( ta{:,i});
 
-            ta.(ta.Properties.VariableNames{i})=logical( ta{:,i});
+            else
+                ta.(ta.Properties.VariableNames{i})=categorical( ta{:,i},[nan 0 1],{'Undefined','N' ,'Y'});
 
-        else
-            ta.(ta.Properties.VariableNames{i})=categorical( ta{:,i},[nan 0 1],{'Undefined','N' ,'Y'});
-
+            end
         end
     end
-
 
     % Make table headings
     if   strcmp(ta{1,i},'Heading')
@@ -162,6 +168,7 @@ for i=1:size(ta,2)
         ma=nanmax(ta{:,i});
         sd=nanstd(ta{:,i});
         n=sum(isnan(ta{:,i})==0);
+        SUM=nansum(ta{:,i});
         q(1:2,1)=quantile(ta{:,i},[0.25 0.75])';
 
         % estimate statistics for groups data
@@ -176,6 +183,7 @@ for i=1:size(ta,2)
                     sd(1,j+1)=nanstd(x);
                     n(1,j+1)=sum(isnan(x)==0);
                     q(1:2,j+1)=quantile(x,[0.25 0.75])';
+                    SUM(1,j+1)=nansum(x);
                 else
                     u(1,j+1)=nan;
                     m(1,j+1)=nan;
@@ -184,10 +192,13 @@ for i=1:size(ta,2)
                     sd(1,j+1)=nan;
                     q(1:2,j+1)=nan;
                     n(1,j+1)=sum(isnan(x)==0);
-
+                    SUM(1,j+1)=nan;
                 end
             end
         end
+    
+   
+
 
         % add statics for numeric data to table
         if isempty(ta.Properties.VariableDescriptions) |  isempty(ta.Properties.VariableDescriptions{i})
@@ -204,9 +215,14 @@ for i=1:size(ta,2)
         end
 
         Res{end,2}={''};
+
+
+
         if nugrp>0
             Res{end,2:nugrp+2}={''};
         end
+       
+        
         if ~options.Compact
             Res{end+1,1}={' N'};
 
@@ -216,27 +232,27 @@ for i=1:size(ta,2)
 
 
         end
-
+    
 
         % estimate p-value
         if nugrp>1
-         
-            if isempty( options.StatisticalMethod)  |  options.StatisticalMethod(i)=='anova-ttest' 
-            [p]=anova1(ta{:,i},grp,'off');
 
-            
-            elseif options.StatisticalMethod(i)=='poisson' 
-            mdl=fitglm(grp,ta{:,i}, 'Distribution', 'poisson');
+            if isempty( options.StatisticalMethod)  |  options.StatisticalMethod(i)=='anova-ttest'
+                [p]=anova1(ta{:,i},grp,'off');
+
+
+            elseif options.StatisticalMethod(i)=='poisson'
+                mdl=fitglm(grp,ta{:,i}, 'Distribution', 'poisson');
 
                 p=mdl.Coefficients.pValue(end);
 
             elseif options.StatisticalMethod(i)=='rank'  & length(ugrp)==2
 
-              p=  ranksum(ta{ugrp(1)==grp,i},ta{ugrp(2)==grp,i});
+                p=  ranksum(ta{ugrp(1)==grp,i},ta{ugrp(2)==grp,i});
 
 
             elseif options.StatisticalMethod(i)=='kstest'  & length(ugrp)==2
-                 [~,  p]= kstest2(ta{ugrp(1)==grp,i},ta{ugrp(2)==grp,i})
+                [~,  p]= kstest2(ta{ugrp(1)==grp,i},ta{ugrp(2)==grp,i})
 
             elseif options.StatisticalMethod(i)=='kruskalwallis'
 
@@ -246,12 +262,13 @@ for i=1:size(ta,2)
 
                 Res{end+1,1}={[' Mean' setstr(177)  'SD (p=' num2str(p,3) ')']};
             else
-                Res{end,1}={[char(Res{end,1}) ' (p=' num2str(p,3) ')']};
+                Res{end,1}={[char(Res{end,1}) ' (Mean' setstr(177)  'SD) (p=' num2str(p,3) ')']};
             end
+
+
 
         else
             if ~options.Compact
-
 
                 Res{end+1,1}={[ ' Mean' setstr(177)  'SD'  ]};
             else
@@ -262,7 +279,18 @@ for i=1:size(ta,2)
 
         for j=1:nugrp+1
             Res{end,1+j}= {[ num2str(u(j),'%.3g') setstr(177) num2str(sd(j),'%.2g')]};
+
         end
+  if options.SumNumericalValues
+            Res{end+1,1}={' SUM'};
+            for j=1:nugrp+1
+
+
+                Res{end,1+j}= {[ num2str(SUM(j),'%.f') ]};
+
+            end
+        end
+
         if ~options.Compact
             Res{end+1,1}={' Median(IQR)'};
             for j=1:nugrp+1
