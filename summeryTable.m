@@ -5,6 +5,7 @@ arguments
     ta
     grp =[]
     options.Compact = false
+    options.StatisticalMethod  {mustBeMember(options.StatisticalMethod,{'anova-ttest','poisson','rank','kstest','kruskalwallis'})} = {}
 end
 
 %
@@ -14,6 +15,10 @@ end
 % Res=summeryTable(ta,grp)
 %  ta:  Table including the variable for analyse. Suported datatypes are: categorical, Logical and numeric
 %  grp: Grouping variable (optional)
+%
+% Name-Value Arguments
+%      Compact: True removes median estimates 
+%      StatisticalMethod: 'anova-ttest'|'poisson'|'rank'|'kstest'|'kruskalwallis'
 %
 %  Res: Results table
 %
@@ -43,7 +48,7 @@ end
 %   Res=summeryTable(T(:,{'Age','Systolic','Diastolic'}),T.Gender)
 %
 %
-% Tip:  To replace varibale names with more describing names use
+% Tip:  To replace variable names with more describing names use
 %       VariableDescriptions in the table, like
 %
 %       T.Properties.VariableDescriptions('Age')={'Subject age'};
@@ -102,6 +107,12 @@ if options.Compact
     end
 else
     k=0;
+end
+
+if ~isempty( options.StatisticalMethod)  
+    
+    options.StatisticalMethod=categorical( options.StatisticalMethod);
+
 end
 
 % bulid the table
@@ -207,10 +218,30 @@ for i=1:size(ta,2)
         end
 
 
-        % estiate p-value
+        % estimate p-value
         if nugrp>1
+         
+            if isempty( options.StatisticalMethod)  |  options.StatisticalMethod(i)=='anova-ttest' 
             [p]=anova1(ta{:,i},grp,'off');
 
+            
+            elseif options.StatisticalMethod(i)=='poisson' 
+            mdl=fitglm(grp,ta{:,i}, 'Distribution', 'poisson');
+
+                p=mdl.Coefficients.pValue(end);
+
+            elseif options.StatisticalMethod(i)=='rank'  & length(ugrp)==2
+
+              p=  ranksum(ta{ugrp(1)==grp,i},ta{ugrp(2)==grp,i});
+
+
+            elseif options.StatisticalMethod(i)=='kstest'  & length(ugrp)==2
+                 [~,  p]= kstest2(ta{ugrp(1)==grp,i},ta{ugrp(2)==grp,i})
+
+            elseif options.StatisticalMethod(i)=='kruskalwallis'
+
+                p = kruskalwallis(ta{:,i},grp,'off');
+            end
             if ~options.Compact
 
                 Res{end+1,1}={[' Mean' setstr(177)  'SD (p=' num2str(p,3) ')']};
@@ -230,7 +261,7 @@ for i=1:size(ta,2)
 
 
         for j=1:nugrp+1
-            Res{end,1+j}= {[ num2str(u(j),'%.1f') setstr(177) num2str(sd(j),3)]};
+            Res{end,1+j}= {[ num2str(u(j),'%.3g') setstr(177) num2str(sd(j),'%.2g')]};
         end
         if ~options.Compact
             Res{end+1,1}={' Median(IQR)'};
